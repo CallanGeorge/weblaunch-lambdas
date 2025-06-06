@@ -1,0 +1,26 @@
+{
+  "name": "weblaunch-lambdas",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+ "build": "esbuild src/handlers/*.ts --bundle --platform=node --target=node22 --outdir=dist",
+  "zip": "npm run build && cd dist && for f in *.js; do zip \"${f%.js}.zip\" \"$f\"; done",
+  "deploy": "npm run zip && cd infra && terraform apply"
+    },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.825.0",
+    "@aws-sdk/lib-dynamodb": "^3.825.0",
+    "zod": "^3.25.55"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.8.3"
+  }
+}
