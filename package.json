@@ -4,10 +4,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
- "build": "esbuild src/handlers/*.ts --bundle --platform=node --target=node22 --outdir=dist",
-  "zip": "npm run build && cd dist && for f in *.js; do zip \"${f%.js}.zip\" \"$f\"; done",
-  "deploy": "npm run zip && cd infra && terraform apply"
-    },
+    "build": "esbuild src/handlers/*.ts --bundle --platform=node --target=node22 --outdir=dist",
+    "zip": "npm run build && cd dist && for f in *.js; do zip \"${f%.js}.zip\" \"$f\"; done",
+    "deploy:stg": "npm run zip && cd infra/environments/stg && terraform init && terraform apply",
+    "deploy:prod": "npm run zip && cd infra/environments/prod && terraform init && terraform apply",
+    "plan:stg": "npm run zip && cd infra/environments/stg && terraform plan",
+    "plan:prod": "npm run zip && cd infra/environments/prod && terraform plan"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -20,6 +23,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.15.30",
     "esbuild": "^0.25.5",
     "typescript": "^5.8.3"
   }

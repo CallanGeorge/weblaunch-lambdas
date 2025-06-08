@@ -6840,13 +6840,13 @@ var require_dist_cjs21 = __commonJS({
     var parseArn = /* @__PURE__ */ __name((value) => {
       const segments = value.split(ARN_DELIMITER);
       if (segments.length < 6) return null;
-      const [arn, partition2, service, region, accountId, ...resourcePath] = segments;
+      const [arn, partition2, service, region2, accountId, ...resourcePath] = segments;
       if (arn !== "arn" || partition2 === "" || service === "" || resourcePath.join(ARN_DELIMITER) === "") return null;
       const resourceId = resourcePath.map((resource) => resource.split(RESOURCE_DELIMITER)).flat();
       return {
         partition: partition2,
         service,
-        region,
+        region: region2,
         accountId,
         resourceId
       };
@@ -7115,8 +7115,8 @@ var require_dist_cjs21 = __commonJS({
       const { partitions } = selectedPartitionsInfo;
       for (const partition2 of partitions) {
         const { regions, outputs } = partition2;
-        for (const [region, regionData] of Object.entries(regions)) {
-          if (region === value) {
+        for (const [region2, regionData] of Object.entries(regions)) {
+          if (region2 === value) {
             return {
               ...outputs,
               ...regionData
@@ -7721,10 +7721,10 @@ var require_dist_cjs23 = __commonJS({
     var import_util_utf86 = require_dist_cjs12();
     var signingKeyCache = {};
     var cacheQueue = [];
-    var createScope = /* @__PURE__ */ __name((shortDate, region, service) => `${shortDate}/${region}/${service}/${KEY_TYPE_IDENTIFIER}`, "createScope");
-    var getSigningKey = /* @__PURE__ */ __name(async (sha256Constructor, credentials, shortDate, region, service) => {
+    var createScope = /* @__PURE__ */ __name((shortDate, region2, service) => `${shortDate}/${region2}/${service}/${KEY_TYPE_IDENTIFIER}`, "createScope");
+    var getSigningKey = /* @__PURE__ */ __name(async (sha256Constructor, credentials, shortDate, region2, service) => {
       const credsHash = await hmac(sha256Constructor, credentials.secretAccessKey, credentials.accessKeyId);
-      const cacheKey = `${shortDate}:${region}:${service}:${(0, import_util_hex_encoding.toHex)(credsHash)}:${credentials.sessionToken}`;
+      const cacheKey = `${shortDate}:${region2}:${service}:${(0, import_util_hex_encoding.toHex)(credsHash)}:${credentials.sessionToken}`;
       if (cacheKey in signingKeyCache) {
         return signingKeyCache[cacheKey];
       }
@@ -7733,7 +7733,7 @@ var require_dist_cjs23 = __commonJS({
         delete signingKeyCache[cacheQueue.shift()];
       }
       let key = `AWS4${credentials.secretAccessKey}`;
-      for (const signable of [shortDate, region, service, KEY_TYPE_IDENTIFIER]) {
+      for (const signable of [shortDate, region2, service, KEY_TYPE_IDENTIFIER]) {
         key = await hmac(sha256Constructor, key, signable);
       }
       return signingKeyCache[cacheKey] = key;
@@ -7997,7 +7997,7 @@ var require_dist_cjs23 = __commonJS({
       constructor({
         applyChecksum,
         credentials,
-        region,
+        region: region2,
         service,
         sha256,
         uriEscapePath = true
@@ -8006,7 +8006,7 @@ var require_dist_cjs23 = __commonJS({
         this.sha256 = sha256;
         this.uriEscapePath = uriEscapePath;
         this.applyChecksum = typeof applyChecksum === "boolean" ? applyChecksum : true;
-        this.regionProvider = (0, import_util_middleware8.normalizeProvider)(region);
+        this.regionProvider = (0, import_util_middleware8.normalizeProvider)(region2);
         this.credentialProvider = (0, import_util_middleware8.normalizeProvider)(credentials);
       }
       createCanonicalRequest(request, canonicalHeaders, payloadHash) {
@@ -8070,7 +8070,7 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
       constructor({
         applyChecksum,
         credentials,
-        region,
+        region: region2,
         service,
         sha256,
         uriEscapePath = true
@@ -8078,7 +8078,7 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
         super({
           applyChecksum,
           credentials,
-          region,
+          region: region2,
           service,
           sha256,
           uriEscapePath
@@ -8101,14 +8101,14 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
         } = options;
         const credentials = await this.credentialProvider();
         this.validateResolvedCredentials(credentials);
-        const region = signingRegion ?? await this.regionProvider();
+        const region2 = signingRegion ?? await this.regionProvider();
         const { longDate, shortDate } = this.formatDate(signingDate);
         if (expiresIn > MAX_PRESIGNED_TTL) {
           return Promise.reject(
             "Signature version 4 presigned URLs must have an expiration date less than one week in the future"
           );
         }
-        const scope = createScope(shortDate, region, signingService ?? this.service);
+        const scope = createScope(shortDate, region2, signingService ?? this.service);
         const request = moveHeadersToQuery(prepareRequest(originalRequest), { unhoistableHeaders, hoistableHeaders });
         if (credentials.sessionToken) {
           request.query[TOKEN_QUERY_PARAM] = credentials.sessionToken;
@@ -8122,7 +8122,7 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
         request.query[SIGNATURE_QUERY_PARAM] = await this.getSignature(
           longDate,
           scope,
-          this.getSigningKey(credentials, region, shortDate, signingService),
+          this.getSigningKey(credentials, region2, shortDate, signingService),
           this.createCanonicalRequest(request, canonicalHeaders, await getPayloadHash(originalRequest, this.sha256))
         );
         return request;
@@ -8139,9 +8139,9 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
         }
       }
       async signEvent({ headers, payload }, { signingDate = /* @__PURE__ */ new Date(), priorSignature, signingRegion, signingService }) {
-        const region = signingRegion ?? await this.regionProvider();
+        const region2 = signingRegion ?? await this.regionProvider();
         const { shortDate, longDate } = this.formatDate(signingDate);
-        const scope = createScope(shortDate, region, signingService ?? this.service);
+        const scope = createScope(shortDate, region2, signingService ?? this.service);
         const hashedPayload = await getPayloadHash({ headers: {}, body: payload }, this.sha256);
         const hash = new this.sha256();
         hash.update(headers);
@@ -8154,7 +8154,7 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
           hashedHeaders,
           hashedPayload
         ].join("\n");
-        return this.signString(stringToSign, { signingDate, signingRegion: region, signingService });
+        return this.signString(stringToSign, { signingDate, signingRegion: region2, signingService });
       }
       async signMessage(signableMessage, { signingDate = /* @__PURE__ */ new Date(), signingRegion, signingService }) {
         const promise = this.signEvent(
@@ -8176,9 +8176,9 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
       async signString(stringToSign, { signingDate = /* @__PURE__ */ new Date(), signingRegion, signingService } = {}) {
         const credentials = await this.credentialProvider();
         this.validateResolvedCredentials(credentials);
-        const region = signingRegion ?? await this.regionProvider();
+        const region2 = signingRegion ?? await this.regionProvider();
         const { shortDate } = this.formatDate(signingDate);
-        const hash = new this.sha256(await this.getSigningKey(credentials, region, shortDate, signingService));
+        const hash = new this.sha256(await this.getSigningKey(credentials, region2, shortDate, signingService));
         hash.update((0, import_util_utf852.toUint8Array)(stringToSign));
         return (0, import_util_hex_encoding.toHex)(await hash.digest());
       }
@@ -8191,10 +8191,10 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
       } = {}) {
         const credentials = await this.credentialProvider();
         this.validateResolvedCredentials(credentials);
-        const region = signingRegion ?? await this.regionProvider();
+        const region2 = signingRegion ?? await this.regionProvider();
         const request = prepareRequest(requestToSign);
         const { longDate, shortDate } = this.formatDate(signingDate);
-        const scope = createScope(shortDate, region, signingService ?? this.service);
+        const scope = createScope(shortDate, region2, signingService ?? this.service);
         request.headers[AMZ_DATE_HEADER] = longDate;
         if (credentials.sessionToken) {
           request.headers[TOKEN_HEADER] = credentials.sessionToken;
@@ -8207,7 +8207,7 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
         const signature = await this.getSignature(
           longDate,
           scope,
-          this.getSigningKey(credentials, region, shortDate, signingService),
+          this.getSigningKey(credentials, region2, shortDate, signingService),
           this.createCanonicalRequest(request, canonicalHeaders, payloadHash)
         );
         request.headers[AUTH_HEADER] = `${ALGORITHM_IDENTIFIER} Credential=${credentials.accessKeyId}/${scope}, SignedHeaders=${this.getCanonicalHeaderList(canonicalHeaders)}, Signature=${signature}`;
@@ -8224,8 +8224,8 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
         hash.update((0, import_util_utf852.toUint8Array)(stringToSign));
         return (0, import_util_hex_encoding.toHex)(await hash.digest());
       }
-      getSigningKey(credentials, region, shortDate, service) {
-        return getSigningKey(this.sha256, credentials, shortDate, region, service || this.service);
+      getSigningKey(credentials, region2, shortDate, service) {
+        return getSigningKey(this.sha256, credentials, shortDate, region2, service || this.service);
       }
     };
     var signatureV4aContainer = {
@@ -8308,15 +8308,15 @@ var init_resolveAwsSdkSigV4Config = __esm({
       if (config.signer) {
         signer = normalizeProvider2(config.signer);
       } else if (config.regionInfoProvider) {
-        signer = () => normalizeProvider2(config.region)().then(async (region) => [
-          await config.regionInfoProvider(region, {
+        signer = () => normalizeProvider2(config.region)().then(async (region2) => [
+          await config.regionInfoProvider(region2, {
             useFipsEndpoint: await config.useFipsEndpoint(),
             useDualstackEndpoint: await config.useDualstackEndpoint()
           }) || {},
-          region
-        ]).then(([regionInfo, region]) => {
+          region2
+        ]).then(([regionInfo, region2]) => {
           const { signingRegion, signingService } = regionInfo;
-          config.signingRegion = config.signingRegion || signingRegion || region;
+          config.signingRegion = config.signingRegion || signingRegion || region2;
           config.signingName = config.signingName || signingService || config.serviceId;
           const params = {
             ...config,
@@ -13265,14 +13265,14 @@ var require_dist_cjs30 = __commonJS({
     }, "resolveCustomEndpointsConfig");
     var getEndpointFromRegion = /* @__PURE__ */ __name(async (input) => {
       const { tls = true } = input;
-      const region = await input.region();
+      const region2 = await input.region();
       const dnsHostRegex = new RegExp(/^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])$/);
-      if (!dnsHostRegex.test(region)) {
+      if (!dnsHostRegex.test(region2)) {
         throw new Error("Invalid region in client config");
       }
       const useDualstackEndpoint = await input.useDualstackEndpoint();
       const useFipsEndpoint = await input.useFipsEndpoint();
-      const { hostname } = await input.regionInfoProvider(region, { useDualstackEndpoint, useFipsEndpoint }) ?? {};
+      const { hostname } = await input.regionInfoProvider(region2, { useDualstackEndpoint, useFipsEndpoint }) ?? {};
       if (!hostname) {
         throw new Error("Cannot resolve hostname from client config");
       }
@@ -13300,23 +13300,23 @@ var require_dist_cjs30 = __commonJS({
     var NODE_REGION_CONFIG_FILE_OPTIONS3 = {
       preferredFile: "credentials"
     };
-    var isFipsRegion = /* @__PURE__ */ __name((region) => typeof region === "string" && (region.startsWith("fips-") || region.endsWith("-fips")), "isFipsRegion");
-    var getRealRegion = /* @__PURE__ */ __name((region) => isFipsRegion(region) ? ["fips-aws-global", "aws-fips"].includes(region) ? "us-east-1" : region.replace(/fips-(dkr-|prod-)?|-fips/, "") : region, "getRealRegion");
+    var isFipsRegion = /* @__PURE__ */ __name((region2) => typeof region2 === "string" && (region2.startsWith("fips-") || region2.endsWith("-fips")), "isFipsRegion");
+    var getRealRegion = /* @__PURE__ */ __name((region2) => isFipsRegion(region2) ? ["fips-aws-global", "aws-fips"].includes(region2) ? "us-east-1" : region2.replace(/fips-(dkr-|prod-)?|-fips/, "") : region2, "getRealRegion");
     var resolveRegionConfig3 = /* @__PURE__ */ __name((input) => {
-      const { region, useFipsEndpoint } = input;
-      if (!region) {
+      const { region: region2, useFipsEndpoint } = input;
+      if (!region2) {
         throw new Error("Region is missing");
       }
       return Object.assign(input, {
         region: async () => {
-          if (typeof region === "string") {
-            return getRealRegion(region);
+          if (typeof region2 === "string") {
+            return getRealRegion(region2);
           }
-          const providedRegion = await region();
+          const providedRegion = await region2();
           return getRealRegion(providedRegion);
         },
         useFipsEndpoint: async () => {
-          const providedRegion = typeof region === "string" ? region : await region();
+          const providedRegion = typeof region2 === "string" ? region2 : await region2();
           if (isFipsRegion(providedRegion)) {
             return true;
           }
@@ -13328,7 +13328,7 @@ var require_dist_cjs30 = __commonJS({
       ({ tags }) => useFipsEndpoint === tags.includes("fips") && useDualstackEndpoint === tags.includes("dualstack")
     )?.hostname, "getHostnameFromVariants");
     var getResolvedHostname = /* @__PURE__ */ __name((resolvedRegion, { regionHostname, partitionHostname }) => regionHostname ? regionHostname : partitionHostname ? partitionHostname.replace("{region}", resolvedRegion) : void 0, "getResolvedHostname");
-    var getResolvedPartition = /* @__PURE__ */ __name((region, { partitionHash }) => Object.keys(partitionHash || {}).find((key) => partitionHash[key].regions.includes(region)) ?? "aws", "getResolvedPartition");
+    var getResolvedPartition = /* @__PURE__ */ __name((region2, { partitionHash }) => Object.keys(partitionHash || {}).find((key) => partitionHash[key].regions.includes(region2)) ?? "aws", "getResolvedPartition");
     var getResolvedSigningRegion = /* @__PURE__ */ __name((hostname, { signingRegion, regionRegex, useFipsEndpoint }) => {
       if (signingRegion) {
         return signingRegion;
@@ -13340,15 +13340,15 @@ var require_dist_cjs30 = __commonJS({
         }
       }
     }, "getResolvedSigningRegion");
-    var getRegionInfo = /* @__PURE__ */ __name((region, {
+    var getRegionInfo = /* @__PURE__ */ __name((region2, {
       useFipsEndpoint = false,
       useDualstackEndpoint = false,
       signingService,
       regionHash,
       partitionHash
     }) => {
-      const partition = getResolvedPartition(region, { partitionHash });
-      const resolvedRegion = region in regionHash ? region : partitionHash[partition]?.endpoint ?? region;
+      const partition = getResolvedPartition(region2, { partitionHash });
+      const resolvedRegion = region2 in regionHash ? region2 : partitionHash[partition]?.endpoint ?? region2;
       const hostnameOptions = { useFipsEndpoint, useDualstackEndpoint };
       const regionHostname = getHostnameFromVariants(regionHash[resolvedRegion]?.variants, hostnameOptions);
       const partitionHostname = getHostnameFromVariants(partitionHash[partition]?.variants, hostnameOptions);
@@ -17231,13 +17231,13 @@ var require_dist_cjs46 = __commonJS({
       default: "legacy"
     };
     var resolveDefaultsModeConfig3 = /* @__PURE__ */ __name(({
-      region = (0, import_node_config_provider3.loadConfig)(import_config_resolver5.NODE_REGION_CONFIG_OPTIONS),
+      region: region2 = (0, import_node_config_provider3.loadConfig)(import_config_resolver5.NODE_REGION_CONFIG_OPTIONS),
       defaultsMode = (0, import_node_config_provider3.loadConfig)(NODE_DEFAULTS_MODE_CONFIG_OPTIONS)
     } = {}) => (0, import_property_provider2.memoize)(async () => {
       const mode = typeof defaultsMode === "function" ? await defaultsMode() : defaultsMode;
       switch (mode?.toLowerCase()) {
         case "auto":
-          return resolveNodeDefaultsModeAuto(region);
+          return resolveNodeDefaultsModeAuto(region2);
         case "in-region":
         case "cross-region":
         case "mobile":
@@ -17375,8 +17375,8 @@ var require_dist_cjs47 = __commonJS({
     module2.exports = __toCommonJS2(index_exports);
     var getAwsRegionExtensionConfiguration3 = /* @__PURE__ */ __name((runtimeConfig) => {
       return {
-        setRegion(region) {
-          runtimeConfig.region = region;
+        setRegion(region2) {
+          runtimeConfig.region = region2;
         },
         region() {
           return runtimeConfig.region;
@@ -17400,23 +17400,23 @@ var require_dist_cjs47 = __commonJS({
     var NODE_REGION_CONFIG_FILE_OPTIONS3 = {
       preferredFile: "credentials"
     };
-    var isFipsRegion = /* @__PURE__ */ __name((region) => typeof region === "string" && (region.startsWith("fips-") || region.endsWith("-fips")), "isFipsRegion");
-    var getRealRegion = /* @__PURE__ */ __name((region) => isFipsRegion(region) ? ["fips-aws-global", "aws-fips"].includes(region) ? "us-east-1" : region.replace(/fips-(dkr-|prod-)?|-fips/, "") : region, "getRealRegion");
+    var isFipsRegion = /* @__PURE__ */ __name((region2) => typeof region2 === "string" && (region2.startsWith("fips-") || region2.endsWith("-fips")), "isFipsRegion");
+    var getRealRegion = /* @__PURE__ */ __name((region2) => isFipsRegion(region2) ? ["fips-aws-global", "aws-fips"].includes(region2) ? "us-east-1" : region2.replace(/fips-(dkr-|prod-)?|-fips/, "") : region2, "getRealRegion");
     var resolveRegionConfig3 = /* @__PURE__ */ __name((input) => {
-      const { region, useFipsEndpoint } = input;
-      if (!region) {
+      const { region: region2, useFipsEndpoint } = input;
+      if (!region2) {
         throw new Error("Region is missing");
       }
       return Object.assign(input, {
         region: /* @__PURE__ */ __name(async () => {
-          if (typeof region === "string") {
-            return getRealRegion(region);
+          if (typeof region2 === "string") {
+            return getRealRegion(region2);
           }
-          const providedRegion = await region();
+          const providedRegion = await region2();
           return getRealRegion(providedRegion);
         }, "region"),
         useFipsEndpoint: /* @__PURE__ */ __name(async () => {
-          const providedRegion = typeof region === "string" ? region : await region();
+          const providedRegion = typeof region2 === "string" ? region2 : await region2();
           if (isFipsRegion(providedRegion)) {
             return true;
           }
@@ -20534,10 +20534,10 @@ var init_defaultStsRoleAssumers = __esm({
       return void 0;
     };
     resolveRegion = async (_region, _parentRegion, credentialProviderLogger) => {
-      const region = typeof _region === "function" ? await _region() : _region;
+      const region2 = typeof _region === "function" ? await _region() : _region;
       const parentRegion = typeof _parentRegion === "function" ? await _parentRegion() : _parentRegion;
-      credentialProviderLogger?.debug?.("@aws-sdk/client-sts::resolveRegion", "accepting first of:", `${region} (provider)`, `${parentRegion} (parent client)`, `${ASSUME_ROLE_DEFAULT_REGION} (STS default)`);
-      return region ?? parentRegion ?? ASSUME_ROLE_DEFAULT_REGION;
+      credentialProviderLogger?.debug?.("@aws-sdk/client-sts::resolveRegion", "accepting first of:", `${region2} (provider)`, `${parentRegion} (parent client)`, `${ASSUME_ROLE_DEFAULT_REGION} (STS default)`);
+      return region2 ?? parentRegion ?? ASSUME_ROLE_DEFAULT_REGION;
     };
     getDefaultRoleAssumer = (stsOptions, STSClient2) => {
       let stsClient;
@@ -20545,8 +20545,8 @@ var init_defaultStsRoleAssumers = __esm({
       return async (sourceCreds, params) => {
         closureSourceCreds = sourceCreds;
         if (!stsClient) {
-          const { logger: logger3 = stsOptions?.parentClientConfig?.logger, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger } = stsOptions;
-          const resolvedRegion = await resolveRegion(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger);
+          const { logger: logger3 = stsOptions?.parentClientConfig?.logger, region: region2, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger } = stsOptions;
+          const resolvedRegion = await resolveRegion(region2, stsOptions?.parentClientConfig?.region, credentialProviderLogger);
           const isCompatibleRequestHandler = !isH2(requestHandler);
           stsClient = new STSClient2({
             profile: stsOptions?.parentClientConfig?.profile,
@@ -20577,8 +20577,8 @@ var init_defaultStsRoleAssumers = __esm({
       let stsClient;
       return async (params) => {
         if (!stsClient) {
-          const { logger: logger3 = stsOptions?.parentClientConfig?.logger, region, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger } = stsOptions;
-          const resolvedRegion = await resolveRegion(region, stsOptions?.parentClientConfig?.region, credentialProviderLogger);
+          const { logger: logger3 = stsOptions?.parentClientConfig?.logger, region: region2, requestHandler = stsOptions?.parentClientConfig?.requestHandler, credentialProviderLogger } = stsOptions;
+          const resolvedRegion = await resolveRegion(region2, stsOptions?.parentClientConfig?.region, credentialProviderLogger);
           const isCompatibleRequestHandler = !isH2(requestHandler);
           stsClient = new STSClient2({
             profile: stsOptions?.parentClientConfig?.profile,
@@ -21003,7 +21003,7 @@ var require_dist_cjs53 = __commonJS({
     var resolveAssumeRoleCredentials = /* @__PURE__ */ __name(async (profileName, profiles, options, visitedProfiles = {}) => {
       options.logger?.debug("@aws-sdk/credential-provider-ini - resolveAssumeRoleCredentials (STS)");
       const profileData = profiles[profileName];
-      const { source_profile, region } = profileData;
+      const { source_profile, region: region2 } = profileData;
       if (!options.roleAssumer) {
         const { getDefaultRoleAssumer: getDefaultRoleAssumer3 } = await Promise.resolve().then(() => __toESM2((init_sts(), __toCommonJS(sts_exports))));
         options.roleAssumer = getDefaultRoleAssumer3(
@@ -21012,7 +21012,7 @@ var require_dist_cjs53 = __commonJS({
             credentialProviderLogger: options.logger,
             parentClientConfig: {
               ...options?.parentClientConfig,
-              region: region ?? options?.parentClientConfig?.region
+              region: region2 ?? options?.parentClientConfig?.region
             }
           },
           options.clientPlugins
@@ -28051,10 +28051,13 @@ var corsGetHeaders = {
 };
 
 // src/handlers/getAppointment.ts
-var client = new import_client_dynamodb.DynamoDBClient({ region: "eu-west-1" });
+var region = process.env.AWS_REGION || "eu-west-1";
+var tableName = process.env.TABLE_NAME || "WebLaunchSchedulerAppointmentTable";
+var environment = process.env.ENVIRONMENT || "prod";
+var client = new import_client_dynamodb.DynamoDBClient({ region });
 var dynamoDB = import_lib_dynamodb.DynamoDBDocumentClient.from(client);
-var tableName = "WebLaunchSchedulerAppointmentTable";
 var handler = async (event) => {
+  console.log(`Processing request in ${environment} environment`);
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -28069,11 +28072,9 @@ var handler = async (event) => {
       body: JSON.stringify({ error: "Method not allowed" })
     };
   }
-  const pathMatch = event.path.match(/\/appointment\/([^\/]+)\/user\/([^\/]+)/);
-  const appointmentId = pathMatch?.[1] || event.pathParameters?.appointmentId || event.queryStringParameters?.appointmentId;
-  const userId = pathMatch?.[2] || event.pathParameters?.userId || event.queryStringParameters?.userId;
-  console.log("Event path:", event.path);
-  console.log("Path match result:", pathMatch);
+  const appointmentId = event.queryStringParameters?.appointmentId;
+  const userId = event.queryStringParameters?.user;
+  console.log("Query parameters:", event.queryStringParameters);
   console.log("Extracted appointmentId:", appointmentId);
   console.log("Extracted userId:", userId);
   if (!appointmentId || !userId) {
@@ -28081,10 +28082,9 @@ var handler = async (event) => {
       statusCode: 400,
       headers: corsGetHeaders,
       body: JSON.stringify({
-        error: "Missing appointmentId or userId parameter",
+        error: "Missing required query parameters: appointmentId and user",
         debug: {
-          path: event.path,
-          pathParameters: event.pathParameters,
+          queryStringParameters: event.queryStringParameters,
           extractedIds: { appointmentId, userId }
         }
       })

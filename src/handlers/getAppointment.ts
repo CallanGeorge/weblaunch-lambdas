@@ -7,14 +7,20 @@ import { DynamoDBDocumentClient, GetCommand, GetCommandInput } from '@aws-sdk/li
 import { corsGetHeaders } from '../utils/corsHeaders';
 import { AppointmentItem } from '../types/appointment';
 
-// Initialize DynamoDB client with AWS SDK v3
-const client = new DynamoDBClient({ region: 'eu-west-1' });
+// Get configuration from environment variables
+const region = process.env.AWS_REGION || 'eu-west-1';
+const tableName = process.env.TABLE_NAME || 'WebLaunchSchedulerAppointmentTable';
+const environment = process.env.ENVIRONMENT || 'prod';
+
+// Initialize DynamoDB client with environment-aware configuration
+const client = new DynamoDBClient({ region });
 const dynamoDB = DynamoDBDocumentClient.from(client);
-const tableName = 'WebLaunchSchedulerAppointmentTable';
 
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  console.log(`Processing request in ${environment} environment`);
+
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -31,20 +37,11 @@ export const handler = async (
     };
   }
 
-  // Parse path parameters from the proxy path
-  // Path will be like: /appointment/BOOKING-mbgvx3oc-ctetcdw3/user/52957424-f0d1-7050-1be4-2ec097c19379
-  const pathMatch = event.path.match(/\/appointment\/([^\/]+)\/user\/([^\/]+)/);
-  
-  const appointmentId = pathMatch?.[1] || 
-    event.pathParameters?.appointmentId ||
-    event.queryStringParameters?.appointmentId;
+  // Get parameters from query string
+  const appointmentId = event.queryStringParameters?.appointmentId;
+  const userId = event.queryStringParameters?.user;
 
-  const userId = pathMatch?.[2] ||
-    event.pathParameters?.userId ||
-    event.queryStringParameters?.userId;
-
-  console.log('Event path:', event.path);
-  console.log('Path match result:', pathMatch);
+  console.log('Query parameters:', event.queryStringParameters);
   console.log('Extracted appointmentId:', appointmentId);
   console.log('Extracted userId:', userId);
 
@@ -53,10 +50,9 @@ export const handler = async (
       statusCode: 400,
       headers: corsGetHeaders,
       body: JSON.stringify({ 
-        error: 'Missing appointmentId or userId parameter',
+        error: 'Missing required query parameters: appointmentId and user',
         debug: {
-          path: event.path,
-          pathParameters: event.pathParameters,
+          queryStringParameters: event.queryStringParameters,
           extractedIds: { appointmentId, userId }
         }
       }),
