@@ -22,3 +22,13 @@ output "lambda_function_arn" {
   description = "ARN of the Lambda function"
   value       = module.lambda.function_arn
 }
+
+output "business_directory_lambda_function_name" {
+  description = "Name of the Business Directory Lambda function"
+  value       = module.business_directory_lambda.function_name
+}
+
+output "business_directory_lambda_function_arn" {
+  description = "ARN of the Business Directory Lambda function"
+  value       = module.business_directory_lambda.function_arn
+}

@@ -52,6 +52,22 @@ module "lambda" {
   }
 }
 
+# Business Directory Lambda module
+module "business_directory_lambda" {
+  source = "../../modules/lambda"
+  
+  function_name = "${var.function_name}-business-directory"
+  filename      = "../../../dist/businessDirectory.zip"
+  handler       = "businessDirectory.handler"
+  role_arn      = module.iam.lambda_role_arn
+  
+  environment_variables = {
+    NODE_OPTIONS = "--enable-source-maps"
+    USERS_TABLE_NAME = "WebLaunchUsers"
+    ENVIRONMENT  = var.environment
+  }
+}
+
 # API Gateway module
 module "api_gateway" {
   source = "../../modules/api-gateway"
@@ -61,6 +77,10 @@ module "api_gateway" {
   lambda_invoke_arn    = module.lambda.invoke_arn
   environment          = var.environment
   stage_name          = "api"
+  
+  # Business directory configuration
+  business_directory_lambda_function_name = module.business_directory_lambda.function_name
+  business_directory_lambda_invoke_arn    = module.business_directory_lambda.invoke_arn
 }
 
 # Custom domain module (correct path)

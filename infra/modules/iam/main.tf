@@ -56,6 +56,26 @@ resource "aws_iam_policy" "dynamodb_read" {
   })
 }
 
+# DynamoDB policy for WebLaunchUsers table (business directory)
+resource "aws_iam_policy" "dynamodb_users_read" {
+  name        = "${var.function_name}-dynamodb-users-read"
+  description = "Allow read and scan access to WebLaunchUsers table"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Action = [
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:BatchGetItem"
+      ],
+      Resource = "arn:aws:dynamodb:${var.region}:*:table/WebLaunchUsers"
+    }]
+  })
+}
+
 # Attach basic execution role
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_exec.name
@@ -66,6 +86,12 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 resource "aws_iam_role_policy_attachment" "lambda_dynamo" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = aws_iam_policy.dynamodb_read.arn
+}
+
+# Attach DynamoDB users policy
+resource "aws_iam_role_policy_attachment" "lambda_dynamo_users" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.dynamodb_users_read.arn
 }
 
 output "lambda_role_arn" {
